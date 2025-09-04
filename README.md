@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Lucro</title>
+  <style>
+    body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+    background: #f4f4f9;
+    }
+    .container {
+    background: #fff;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    }
+    label {
+    display: block;
+    margin: 10px 0 5px;
+    font-weight: bold;
+    }
+    input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    }
+    button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    }
+    button:hover {
+    background: #45a049;
+    }
+    .result {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    }
+    .result p {
+    margin: 8px 0;
+    font-size: 15px;
+    }
+    .alerta {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    }
+    .alerta.vermelho { background: #e74c3c; }
+    .alerta.amarelo { background: #f1c40f; color: #000; }
+    .alerta.verde { background: #27ae60; }
+    table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    }
+    table, th, td {
+    border: 1px solid #ccc;
+    }
+    th, td {
+    padding: 8px;
+    text-align: center;
+    font-size: 14px;
+    }
+    th {
+    background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Calculadora de Lucro</h2>
+    <label>Preço de venda (R$)</label>
+    <input type="number" id="precoVenda" step="0.01">
+
+    <label>Custo do produto (R$)</label>
+    <input type="number" id="custoProduto" step="0.01">
+
+    <label>Frete (R$)</label>
+    <input type="number" id="frete" step="0.01">
+
+    <label>Embalagem (R$)</label>
+    <input type="number" id="embalagem" step="0.01">
+
+    <label>Comissão marketplace (%)</label>
+    <input type="number" id="comissao" step="0.01">
+
+    <label>Taxa fixa marketplace (R$)</label>
+    <input type="number" id="taxaFixa" step="0.01">
+
+    <label>Ads divulgação (%)</label>
+    <input type="number" id="ads" step="0.01">
+
+    <label>Imposto (%)</label>
+    <input type="number" id="imposto" step="0.01">
+
+    <button onclick="calcular()">Calcular</button>
+
+    <div class="result" id="resultado"></div>
+    <div id="alerta"></div>
+    <div id="simulacao"></div>
+  </div>
+
+  <script>
+    function calcular() {
+    let precoVenda = parseFloat(document.getElementById("precoVenda").value) || 0;
+    let custoProduto = parseFloat(document.getElementById("custoProduto").value) || 0;
+    let frete = parseFloat(document.getElementById("frete").value) || 0;
+    let embalagem = parseFloat(document.getElementById("embalagem").value) || 0;
+    let comissao = parseFloat(document.getElementById("comissao").value) || 0;
+    let taxaFixa = parseFloat(document.getElementById("taxaFixa").value) || 0;
+    let ads = parseFloat(document.getElementById("ads").value) || 0;
+    let imposto = parseFloat(document.getElementById("imposto").value) || 0;
+
+    // Função para calcular resultado dado um preço de venda
+    function calcularResultados(pv) {
+    let valorComissao = (comissao / 100) * pv;
+    let valorAds = (ads / 100) * pv;
+    let valorImposto = (imposto / 100) * pv;
+    let custoTotal = custoProduto + frete + embalagem + valorComissao + taxaFixa + valorAds + valorImposto;
+    let lucroLiquido = pv - custoTotal;
+    let margem = (lucroLiquido / pv) * 100;
+    return { pv, custoTotal, lucroLiquido, margem };
+    }
+
+    
+    // Resultados principais
+    let res = calcularResultados(precoVenda);
+
+    // ---- CORREÇÃO ---- //
+    // Percentual dos custos variáveis (% sobre venda)
+    let percVariavel = (comissao + ads + imposto) / 100;
+
+    // Break-even (corrigido)
+    let breakEven = (1 - percVariavel) > 0 ? (custoProduto + frete + embalagem + taxaFixa) / (1 - percVariavel) : Infinity;
+
+    // Preço alvo com 20% de margem
+    let percAlvo = (comissao + ads + imposto + 20) / 100;
+    let precoAlvo = (1 - percAlvo) > 0 ? (custoProduto + frete + embalagem + taxaFixa) / (1 - percAlvo) : Infinity;
+
+    // Cálculo de perda/ganho extra
+    let perdaPossivel = Math.max(precoAlvo - precoVenda, 0);
+    let ganhoExtra = Math.max(precoVenda - precoAlvo, 0);
+
+    let roi = (res.lucroLiquido / res.custoTotal) * 100;
+    let markup = (precoVenda / res.custoTotal) * 100;
+
+
+    document.getElementById("resultado").innerHTML = `
+    <p><strong>Lucro líquido:</strong> R$ ${res.lucroLiquido.toFixed(2)}</p>
+    <p><strong>Margem real:</strong> ${res.margem.toFixed(2)}%</p>
+    <p><strong>Preço de Break-even:</strong> R$ ${breakEven.toFixed(2)}</p>
+    <p><strong>Preço alvo (20% margem):</strong> R$ ${precoAlvo.toFixed(2)}</p>
+    <p><strong>Possível perda se não atingir 20%:</strong> R$ ${perdaPossivel.toFixed(2)}</p>
+    <p><strong>Possível ganho extra se ultrapassar 20%:</strong> R$ ${ganhoExtra.toFixed(2)}</p>
+    <p><strong>ROI (Retorno sobre Investimento):</strong> ${roi.toFixed(2)}%</p>
+    <p><strong>Markup aplicado:</strong> ${markup.toFixed(2)}%</p>
+    `;
+
+    // Alerta visual
+    let alertaDiv = document.getElementById("alerta");
+    if (res.lucroLiquido < 0) {
+    alertaDiv.innerHTML = `<div class="alerta vermelho">🚨 PREJUÍZO! Revise custos e preço de venda.</div>`;
+    } else if (res.margem < 20) {
+    alertaDiv.innerHTML = `<div class="alerta amarelo">⚠️ Lucro positivo, mas margem abaixo de 20%. Risco alto!</div>`;
+    } else {
+    alertaDiv.innerHTML = `<div class="alerta verde">✅ Margem saudável! Acima de 20%, operação segura.</div>`;
+    }
+
+    // Simulação de diferentes preços
+    let simulacaoHTML = "<h3>Simulação de diferentes preços</h3>";
+    simulacaoHTML += "<table><tr><th>Preço (R$)</th><th>Lucro líquido (R$)</th><th>Margem (%)</th></tr>";
+    for (let i = -20; i <= 20; i+=5) {
+    let novoPreco = precoVenda * (1 + i/100);
+    if (novoPreco > 0) {
+    let sim = calcularResultados(novoPreco);
+    simulacaoHTML += `<tr>
+    <td>${sim.pv.toFixed(2)}</td>
+    <td>${sim.lucroLiquido.toFixed(2)}</td>
+    <td>${sim.margem.toFixed(2)}%</td>
+    </tr>`;
+    }
+    }
+    simulacaoHTML += "</table>";
+    document.getElementById("simulacao").innerHTML = simulacaoHTML;
+    }
+  </script>
+</body>
+</html>
